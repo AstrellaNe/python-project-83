@@ -1,0 +1,6 @@
+/.venv/
+/.env/
+/old_ver/
+/dist/
+**/__pycache__/
+**/flask_example_env/
