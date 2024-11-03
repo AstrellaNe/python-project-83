@@ -15,6 +15,7 @@ validators = "^0.18.2"
 
 [tool.poetry.group.dev.dependencies]
 gunicorn = "^23.0.0"
+psycopg = "^3.1.0"
 
 [build-system]
 requires = ["poetry-core"]
