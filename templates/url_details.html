@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Детали URL</title>
+</head>
+<body>
+    <h1>Детали URL</h1>
+    {% if url %}
+        <p>ID: {{ url[0] }}</p>
+        <p>Имя: {{ url[1] }}</p>
+        <p>Дата создания: {{ url[2] }}</p>
+    {% else %}
+        <p>URL не найден.</p>
+    {% endif %}
+    <a href="/">Назад</a>
+</body>
+</html>
