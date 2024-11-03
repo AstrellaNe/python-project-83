@@ -3,7 +3,7 @@ from flask import Flask, request, redirect, flash, render_template
 from db_connection import add_url, get_all_urls, get_connection
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Замените на более безопасный ключ
+
 
 @app.route('/')
 def index():
