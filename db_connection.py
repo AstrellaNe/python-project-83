@@ -28,7 +28,8 @@ def add_url(name):
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
-                    "INSERT INTO urls (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;",
+                    "INSERT INTO urls (name) VALUES (%s) "
+                    "ON CONFLICT (name) DO NOTHING;",
                     (name,)
                 )
                 conn.commit()

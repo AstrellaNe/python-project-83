@@ -1,8 +1,10 @@
 import psycopg2
+import os
 from flask import Flask, request, redirect, flash, render_template
 from db_connection import add_url, get_all_urls, get_connection
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY')
 
 
 @app.route('/')
