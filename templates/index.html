@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hexlet Page Analyzer</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <header class="bg-primary text-white text-center py-5">
@@ -22,10 +22,10 @@
             <button type="submit" class="btn btn-primary">Добавить</button>
         </form>
 
-        <h2>Список добавленных URL</h2>
+        <h2 class="mt-5">Список добавленных URL</h2>
         {% if urls %}
-            <table class="table table-striped">
-                <thead>
+            <table class="table table-striped table-hover mt-3" data-test="urls">
+                <thead class="table-dark">
                     <tr>
                         <th>ID</th>
                         <th>URL</th>
@@ -38,7 +38,7 @@
                         <tr>
                             <td>{{ url[0] }}</td>
                             <td>{{ url[1] }}</td>
-                            <td>{{ url[2] }}</td>
+                            <td>{{ url[2] | datetimeformat('%Y-%m-%d %H:%M:%S') }}</td>
                             <td>
                                 <a href="/urls/{{ url[0] }}" class="btn btn-info btn-sm">Подробнее</a>
                                 <form action="/urls/delete/{{ url[0] }}" method="post" style="display:inline;">
@@ -50,7 +50,7 @@
                 </tbody>
             </table>
         {% else %}
-            <p>URL еще не добавлены.</p>
+            <p class="text-muted">URL еще не добавлены.</p>
         {% endif %}
     </main>
     
@@ -58,6 +58,6 @@
         <p>&copy; 2024 AstrellaNe for Hexlet. Study project.</p>
     </footer>
 
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

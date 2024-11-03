@@ -1,10 +1,19 @@
 import psycopg2
 import os
+import datetime
 from flask import Flask, request, redirect, flash, render_template
 from db_connection import add_url, get_all_urls, get_connection
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
+
+# фильтр для форматирования даты и времени без тысячных сек
+@app.template_filter('datetimeformat')
+def datetimeformat(value, format='%Y-%m-%d %H:%M:%S'):
+    if isinstance(value, datetime.datetime):
+        return value.strftime(format)
+    return value
 
 
 @app.route('/')
@@ -19,7 +28,7 @@ def add_url_route():
     if not url or len(url) > 255:
         flash('Некорректный URL', 'error')
         return redirect('/')
-    
+
     add_url(url)
     flash('URL успешно добавлен', 'success')
     return redirect('/')
