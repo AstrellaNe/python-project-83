@@ -1,3 +1,4 @@
+# db_connection.py
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -22,33 +23,28 @@ def get_connection():
 
 
 # Функция для добавления URL в базу данных
-def add_url(name):
-    conn = get_connection()
-    if conn:
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "INSERT INTO urls (name) VALUES (%s) "
-                    "ON CONFLICT (name) DO NOTHING;",
-                    (name,)
-                )
-                conn.commit()
-                print("URL успешно добавлен")
-        except psycopg2.Error as e:
-            print(f"Ошибка при добавлении URL: {e}")
-        finally:
-            conn.close()
+def insert_url(conn, name):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO urls (name) VALUES (%s) "
+            "ON CONFLICT (name) DO NOTHING;",
+            (name,)
+        )
+        conn.commit()
 
 
 # Функция для получения всех URL
-def get_all_urls():
-    conn = get_connection()
-    if conn:
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM urls ORDER BY created_at DESC;")
-                return cursor.fetchall()
-        except psycopg2.Error as e:
-            print(f"Ошибка при получении данных: {e}")
-        finally:
-            conn.close()
+def get_all_urls(conn):
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM urls ORDER BY created_at DESC;")
+        return cursor.fetchall()
+
+
+# Проверяет, существует ли URL в базе данных
+def url_exists(conn, name):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "SELECT 1 FROM urls WHERE name = %s;",
+            (name,)
+        )
+        return cursor.fetchone() is not None
