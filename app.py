@@ -43,7 +43,8 @@ def add_url(conn):
     # Проверяем, существует ли уже URL
     if url_exists(conn, normalized_url):
         flash('Этот URL уже существует в базе данных', 'info')
-        print("URL already exists in the database.")  # Логируем, что URL уже есть
+        print("URL already exists in the database.")
+        # Логируем, что URL уже есть
         return redirect(url_for('index'))
 
     try:
@@ -54,7 +55,6 @@ def add_url(conn):
         print(f"Database error: {e}")  # Логируем ошибки базы данных
 
     return redirect(url_for('index'))
-
 
 
 @app.route('/urls/<int:id>')
