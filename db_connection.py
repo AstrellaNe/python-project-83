@@ -12,18 +12,22 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 if not DATABASE_URL:
-    raise ValueError("❌ Ошибка: DATABASE_URL в Render не установлен! Проверь")
+    raise ValueError("❌ Ошибка: DATABASE_URL не установлен!")
 
+try: # Функция для установки соединения с базой данных
+    conn = psycopg2.connect(DATABASE_URL)
+    print("✅ Успешное подключение к БД!")
+except psycopg2.OperationalError as e:
+    print(f"❌ Ошибка подключения к БД: {e}")
 
-# Функция для установки соединения с базой данных
-def get_connection():
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        print("✅ Подключение к БД успешно!")
-        return conn
-    except psycopg2.OperationalError as e:
-        print(f"❌ Ошибка подключения к базе данных: {e}")
-        return None
+# Проверяем доступность хоста
+host = DATABASE_URL.split("@")[1].split(":")[0]
+try:
+    print(f"Проверяем доступность хоста: {host}")
+    socket.gethostbyname(host)
+    print("✅ Хост доступен!")
+except socket.gaierror:
+    print(f"❌ Ошибка: Хост {host} недоступен!")
 
 
 # Функция для добавления URL в базу данных
