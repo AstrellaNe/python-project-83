@@ -6,10 +6,13 @@ from flask import Flask, request, redirect, flash, render_template, url_for
 from db_connection import insert_url, get_all_urls, url_exists
 import validators
 from tools import normalize_url, use_db_connection  # Импортируем декоратор
+from dotenv import load_dotenv
 
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
 
 
 @app.template_filter('datetimeformat')

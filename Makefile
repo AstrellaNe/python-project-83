@@ -7,6 +7,9 @@ PORT ?= 8000
 start:
 	poetry run gunicorn -w 5 -b 0.0.0.0:$(PORT) app:app
 
+# не забыть запустить сервер при локальной работе
+# sudo service postgresql restart
+
 
 start-full:
 	# Устанавливаем зависимости проекта
