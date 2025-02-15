@@ -10,10 +10,22 @@ load_dotenv()
 
 # Получение URL базы данных из переменной окружения
 DATABASE_URL = os.getenv('DATABASE_URL')
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+
+# Сначала проверяем, есть ли DATABASE_URL в окружении (Render)
+if "DATABASE_URL" not in os.environ:
+    load_dotenv()  # Если нет, загружаем из .env
+
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 
 if not DATABASE_URL:
     raise ValueError("❌ Ошибка: DATABASE_URL не установлен!")
+if not SECRET_KEY:
+    raise ValueError("❌ Ошибка: SECRET_KEY не установлен!")
 
 
 # Функция для установки соединения с базой данных
