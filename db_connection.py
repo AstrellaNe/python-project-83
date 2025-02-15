@@ -1,7 +1,6 @@
 # db_connection.py
 import os
 import psycopg2
-import os
 from dotenv import load_dotenv
 
 
@@ -13,7 +12,7 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 if not DATABASE_URL:
-    raise ValueError("❌ Ошибка: DATABASE_URL не установлен! Проверь переменные окружения на Render.")
+    raise ValueError("❌ Ошибка: DATABASE_URL в Render не установлен! Проверь")
 
 
 # Функция для установки соединения с базой данных
@@ -24,16 +23,6 @@ def get_connection():
         return conn
     except psycopg2.OperationalError as e:
         print(f"❌ Ошибка подключения к базе данных: {e}")
-        return None
-
-
-# Функция для установки соединения с базой данных
-def get_connection():
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
-    except psycopg2.Error as e:
-        print(f"Ошибка подключения к базе данных: {e}")
         return None
 
 
@@ -49,8 +38,8 @@ def insert_url(conn, name):
 
 
 # Функция для получения всех URL
-def get_all_urls():
-    with get_connection() as conn, conn.cursor() as cursor:
+def get_all_urls(conn):
+    with conn.cursor() as cursor:
         cursor.execute("SELECT * FROM urls ORDER BY created_at DESC;")
         return cursor.fetchall()
 

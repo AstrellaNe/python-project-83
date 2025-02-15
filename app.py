@@ -25,7 +25,7 @@ def datetimeformat(value, format='%Y-%m-%d %H:%M:%S'):
 @app.route('/')
 @use_db_connection
 def index(conn):
-    urls = get_all_urls(conn)
+    urls = get_all_urls(conn)  # ← Передаём conn, потому что декоратор его добавляет
     return render_template('index.html', urls=urls)
 
 
