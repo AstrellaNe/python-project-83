@@ -2,7 +2,7 @@ PORT ?= 8000
 
 dev:
 	# Запускаем приложение Flask локально
-	poetry run flask --app page_analyzer run --port $(PORT)
+	FLASK_APP=page_analyzer poetry run flask run --port $(PORT)
 
 start:
 	# Запускаем Gunicorn с 5 рабочими процессами
@@ -12,7 +12,7 @@ start-full:
 	# Устанавливаем зависимости и собираем проект перед запуском
 	make install
 	make build
-	flask --app page_analyzer --debug run --port $(PORT)
+	FLASK_APP=page_analyzer poetry run flask run --port $(PORT) --debug
 
 start-gunicorn:
 	# Запускаем приложение с Gunicorn (Production Mode)
@@ -30,12 +30,15 @@ lint:
 	# Проверяем код с помощью flake8
 	poetry run flake8
 
+test:
+	# Запускаем тесты с pytest
+	poetry run pytest
+
 git-prepare:
 	# Собираем проект и добавляем в Git
 	make build
 	git add .
 
 build:
-	# Делаем скрипт `build.sh` исполняемым и запускаем его
-	chmod +x build.sh
+	# Запускаем сборку проекта
 	./build.sh
