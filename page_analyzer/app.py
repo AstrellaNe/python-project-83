@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from flask import (Flask, request, redirect, flash,
                    render_template, url_for)
 from page_analyzer.db_connection import (insert_url, get_all_urls,
-                           url_exists, insert_check)
+                                         url_exists, insert_check)
 
 from page_analyzer.tools import normalize_url, use_db_connection
 from dotenv import load_dotenv
