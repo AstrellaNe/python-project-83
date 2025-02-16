@@ -1,50 +1,73 @@
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/AstrellaNe/python-project-83/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/AstrellaNe/python-project-83/actions)
+[![CI Status](https://github.com/AstrellaNe/python-project-83/actions/workflows/main.yml/badge.svg)](https://github.com/AstrellaNe/python-project-83/actions)
+[![Maintainability](https://api.codeclimate.com/v1/badges/ca36f4e239b9247b92fa/maintainability)](https://codeclimate.com/github/AstrellaNe/python-project-83/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/ca36f4e239b9247b92fa/test_coverage)](https://codeclimate.com/github/AstrellaNe/python-project-83/test_coverage)
 
-### Доступ к приложению на временном сервере (temp test server)
-Получить доступ к развернутому приложению по следующему адресу:
+### Access to the deployed application
+[View application (Render)](https://page-analyzer-project-83.onrender.com)
 
-[Посмотреть приложение](https://page-analyzer-project-83.onrender.com)
-
+---
 
 # Page Analyzer
 
-Page Analyzer is a simple web application designed to manage and analyze URLs. It allows users to normalize, validate, and store URLs in a PostgreSQL database, ensuring no duplicates and providing a user-friendly interface.
+**Page Analyzer** is a web application for analyzing web pages.  
+It allows checking website availability and analyzing **SEO data**.
 
-## Features
+## 🔹 Key Features
+- **Website availability analysis** – performs an HTTP request and checks the response status.
+- **SEO analysis** – extracts the title (`<title>`), main heading (`<h1>`), and description (`meta description`).
+- **PostgreSQL database** – stores checked URLs and their history of checks.
+- **Duplicate protection** – prevents adding the same URL multiple times.
+- **Error logging** – displays a message if the site is unavailable.
 
-- URL Normalization: Automatically adds `https://` to URLs without a protocol and handles input with or without `//`.
-- Duplicate Detection: Prevents adding the same URL multiple times.
-- Database Management: Add new URLs, view all added URLs, delete specific URLs, and view details of a specific URL.
-- Validation and Error Handling: Ensures the URL format is valid and provides user feedback for successful operations and errors.
-- User-friendly Interface: Built using Bootstrap for a clean and responsive design.
+---
 
-## How to Run
+## 🚀 How to Run
 
-1. Clone the repository: `git clone https://github.com/AstrellaNe/python-project-83.git && cd python-project-83`
-2. Install dependencies using Poetry: `make install`
-3. Set up environment variables in a `.env` file:
+### 🔹 Local Run
+1. **Clone the repository**:
+   ```sh
+   git clone https://github.com/AstrellaNe/python-project-83.git
+   cd python-project-83
    ```
-   DATABASE_URL=your_database_url
+2. **Install dependencies**:
+   ```sh
+   make install
+   ```
+3. **Set up environment variables (`.env`)**:
+   ```sh
+   DATABASE_URL=postgresql://user:password@localhost:5432/database
    SECRET_KEY=your_secret_key
    ```
-4. Start the application in development mode: `make dev`
-5. Start the application in production mode: `make start`
-6. Access the application:
-   - Development: [http://127.0.0.1:5000](http://127.0.0.1:5000)
-   - Production: [http://0.0.0.0:8000](http://0.0.0.0:8000)
+4. **Create database tables**:
+   ```sh
+   make build
+   ```
+5. **Run the application**:
+   - In **development** (Flask + Debug Mode):  
+     ```sh
+     make dev
+     ```
+   - In **production** (Gunicorn + PostgreSQL):  
+     ```sh
+     make start
+     ```
 
-## Requirements
+6. **Open in browser**:
+   - **Locally**: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+   - **Deployed application**: [https://page-analyzer-project-83.onrender.com](https://page-analyzer-project-83.onrender.com)
 
+---
+
+## 📌 Requirements
 - Python 3.10+
 - PostgreSQL
-- Flask
-- Poetry (for dependency management)
+- Flask, Requests, BeautifulSoup
+- Poetry (dependency management)
 
-## License
+---
 
-This project is open-source and available under the MIT License.
-
-
-
+## 📜 License
+This project is available under the MIT license.
 
