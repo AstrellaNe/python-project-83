@@ -75,3 +75,14 @@ def url_exists(conn, name):
             (name,)
         )
         return cursor.fetchone() is not None
+
+
+def insert_check(conn, url_id):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """INSERT INTO url_checks (url_id) VALUES
+            (%s) RETURNING id, created_at;""",
+            (url_id,)
+        )
+        conn.commit()
+        return cursor.fetchone()  # Возвращает id и created_at новой проверки

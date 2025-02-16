@@ -3,7 +3,7 @@ import psycopg2
 import os
 import datetime
 from flask import Flask, request, redirect, flash, render_template, url_for
-from db_connection import insert_url, get_all_urls, url_exists
+from db_connection import insert_url, get_all_urls, url_exists, insert_check
 import validators
 from tools import normalize_url, use_db_connection  # Импортируем декоратор
 from dotenv import load_dotenv
@@ -65,15 +65,30 @@ def add_url(conn):
 def show_url(conn, id):
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM urls WHERE id = %s;", (id,))
+            cursor.execute(
+                "SELECT * FROM urls WHERE id = %s;", (id,)
+            )
             url = cursor.fetchone()
+
             if url:
-                return render_template('url_details.html', url=url)
-            else:
-                flash('URL не найден', 'error')
-                return redirect(url_for('index'))
+                cursor.execute(
+                    """SELECT id, created_at FROM url_checks
+                       WHERE url_id = %s ORDER BY created_at DESC;""",
+                    (id,)
+                )
+                checks = cursor.fetchall()
+                print(f"🔥 Загруженные проверки: {checks}")
+
+                return render_template(
+                    'url_details.html', url=url, checks=checks
+                )
+
+            flash('URL не найден', 'error')
+            return redirect(url_for('index'))
+
     except psycopg2.Error as e:
         flash(f"Ошибка при получении данных: {e}", 'error')
+
     return redirect(url_for('index'))
 
 
@@ -88,6 +103,19 @@ def delete_url(conn, id):
     except psycopg2.Error as e:
         flash(f"Ошибка при удалении URL: {e}", 'error')
     return redirect(url_for('index'))
+
+
+# при нажатии кнопки будет создаваться новая проверка
+@app.route('/urls/<int:id>/checks', methods=['POST'])
+@use_db_connection
+def check_url(conn, id):
+    try:
+        insert_check(conn, id)
+        flash("Проверка добавлена!", "success")
+    except psycopg2.Error as e:
+        flash(f"Ошибка при добавлении проверки: {e}", "danger")
+
+    return redirect(url_for('show_url', id=id))
 
 
 if __name__ == '__main__':

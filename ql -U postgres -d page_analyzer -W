@@ -1,0 +1,17 @@
+                              List of databases
+   Name    |  Owner   | Encoding | Collate |  Ctype  |   Access privileges   
+-----------+----------+----------+---------+---------+-----------------------
+ database  | postgres | UTF8     | C.UTF-8 | C.UTF-8 | =Tc/postgres         +
+           |          |          |         |         | postgres=CTc/postgres+
+           |          |          |         |         | admin=CTc/postgres
+ postgres  | postgres | UTF8     | C.UTF-8 | C.UTF-8 | 
+ template0 | postgres | UTF8     | C.UTF-8 | C.UTF-8 | =c/postgres          +
+           |          |          |         |         | postgres=CTc/postgres
+ template1 | postgres | UTF8     | C.UTF-8 | C.UTF-8 | =c/postgres          +
+           |          |          |         |         | postgres=CTc/postgres
+ test_db1  | postgres | UTF8     | C.UTF-8 | C.UTF-8 | 
+ users     | postgres | UTF8     | C.UTF-8 | C.UTF-8 | =Tc/postgres         +
+           |          |          |         |         | postgres=CTc/postgres+
+           |          |          |         |         | scrat=CTc/postgres
+(6 rows)
+
