@@ -7,20 +7,9 @@ from dotenv import load_dotenv
 # Загрузка переменных окружения
 load_dotenv()
 
-
 # Получение URL базы данных из переменной окружения
-DATABASE_URL = os.getenv('DATABASE_URL')
-SECRET_KEY = os.getenv("SECRET_KEY")
-
-
-# Сначала проверяем, есть ли DATABASE_URL в окружении (Render)
-if "DATABASE_URL" not in os.environ:
-    load_dotenv()  # Если нет, загружаем из .env
-
-
 DATABASE_URL = os.getenv("DATABASE_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
-
 
 if not DATABASE_URL:
     raise ValueError("❌ Ошибка: DATABASE_URL не установлен!")
@@ -53,8 +42,9 @@ except socket.gaierror:
 def insert_url(conn, name):
     with conn.cursor() as cursor:
         cursor.execute(
-            "INSERT INTO urls (name) VALUES (%s) "
-            "ON CONFLICT (name) DO NOTHING;",
+            """INSERT INTO urls (name)
+               VALUES (%s)
+               ON CONFLICT (name) DO NOTHING;""",
             (name,)
         )
         conn.commit()
@@ -63,7 +53,15 @@ def insert_url(conn, name):
 # Функция для получения всех URL
 def get_all_urls(conn):
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM urls ORDER BY created_at DESC;")
+        cursor.execute(
+            """SELECT urls.id, urls.name, urls.created_at,
+                      (SELECT status_code FROM url_checks
+                       WHERE url_checks.url_id = urls.id
+                       ORDER BY created_at DESC
+                       LIMIT 1) AS last_status
+               FROM urls
+               ORDER BY urls.created_at DESC;"""
+        )
         return cursor.fetchall()
 
 
@@ -77,12 +75,19 @@ def url_exists(conn, name):
         return cursor.fetchone() is not None
 
 
-def insert_check(conn, url_id):
+# Функция для записи проверки в базу
+def insert_check(conn, url_id, status_code, h1, title, description):
     with conn.cursor() as cursor:
+        print(f"🔥 Добавляем проверку: url_id={url_id}, "
+              f"status_code={status_code}, h1={h1}")
+
         cursor.execute(
-            """INSERT INTO url_checks (url_id) VALUES
-            (%s) RETURNING id, created_at;""",
-            (url_id,)
+            """INSERT INTO url_checks (url_id, status_code,
+                                       h1, title, description)
+               VALUES (%s, %s, %s, %s, %s)
+               RETURNING id, created_at;""",
+            (url_id, status_code, h1, title, description)
         )
+        check = cursor.fetchone()
         conn.commit()
-        return cursor.fetchone()  # Возвращает id и created_at новой проверки
+        print(f"✅ Успешно добавлено: {check}")
