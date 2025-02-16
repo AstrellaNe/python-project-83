@@ -13,6 +13,12 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 if not DATABASE_URL:
     raise ValueError("❌ Ошибка: DATABASE_URL не установлен!")
+try:
+    conn = psycopg2.connect(DATABASE_URL)
+    print("✅ Успешное подключение к БД!")
+except psycopg2.OperationalError as e:
+    print(f"❌ Ошибка подключения к БД: {e}")
+    
 if not SECRET_KEY:
     raise ValueError("❌ Ошибка: SECRET_KEY не установлен!")
 
@@ -55,7 +61,7 @@ def get_all_urls(conn):
     with conn.cursor() as cursor:
         cursor.execute(
             """SELECT urls.id, urls.name, urls.created_at,
-                      (SELECT status_code FROM url_checks
+                      (SELECT created_at FROM url_checks
                        WHERE url_checks.url_id = urls.id
                        ORDER BY created_at DESC
                        LIMIT 1) AS last_status

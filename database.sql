@@ -19,8 +19,3 @@ CREATE TABLE public.url_checks (
     description TEXT,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
--- Гранты (разрешения) для пользователя admin
-GRANT ALL ON TABLE public.urls TO admin;
-GRANT ALL ON TABLE public.url_checks TO admin;
-GRANT ALL ON SEQUENCE public.url_checks_id_seq TO admin;

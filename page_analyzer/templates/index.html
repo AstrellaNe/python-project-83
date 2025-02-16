@@ -60,7 +60,7 @@
                         <a href="/urls/{{ url[0] }}">{{ url[1] }}</a>
                     </td>
                     <td>{{ url[2] | datetimeformat('%Y-%m-%d') }}</td>
-                    <td>{{ url[3] if url[3] else "—" }}</td>
+                    <td>{{ url[3] | datetimeformat('%Y-%m-%d %H:%M:%S') if url[3] else "—" }}</td>
                     <td>
                         <a href="/urls/{{ url[0] }}" class="btn btn-info btn-sm">Подробнее</a>
                         <form action="/urls/delete/{{ url[0] }}" method="post" style="display:inline;">
