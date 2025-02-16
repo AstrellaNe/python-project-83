@@ -2,7 +2,7 @@
 from urllib.parse import urlparse, urlunparse
 from functools import wraps
 from flask import flash, redirect, url_for
-from db_connection import get_connection
+from page_analyzer.db_connection import get_connection
 
 
 def use_db_connection(func):

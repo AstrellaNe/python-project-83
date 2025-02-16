@@ -7,16 +7,16 @@ import validators
 from bs4 import BeautifulSoup
 from flask import (Flask, request, redirect, flash,
                    render_template, url_for)
-from db_connection import (insert_url, get_all_urls,
+from page_analyzer.db_connection import (insert_url, get_all_urls,
                            url_exists, insert_check)
 
-from tools import normalize_url, use_db_connection
+from page_analyzer.tools import normalize_url, use_db_connection
 from dotenv import load_dotenv
 
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
 
 
