@@ -62,12 +62,16 @@ def add_url(conn):
 
     if not validators.url(normalized_url):
         flash('Некорректный URL', 'danger')
-        return render_template('index.html'), 422
-    # 🔥 Возврат 422 вместо редиректа
+        return render_template('index.html'), 422  # Теперь 422
 
     if url_exists(conn, normalized_url):
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM urls WHERE name = %s;",
+                       (normalized_url,))
+        url_id = cursor.fetchone()[0]
         flash('Страница уже существует', 'info')
-        return redirect(url_for('urls'))
+        return redirect(url_for('url_details', id=url_id))
+        # Редирект на страницу URL
 
     url_id = insert_url(conn, normalized_url)
     flash('Страница успешно добавлена', 'success')
@@ -106,7 +110,8 @@ def fetch_url_data(url):
         return None, None, None, None
 
     except requests.RequestException as e:
-        flash(f"Ошибка запроса: {e}", "danger")
+        flash(f"Произошла ошибка при проверке: {e}", "danger")
+        # не было сообщения
         return None, None, None, None
 
 
@@ -126,7 +131,7 @@ def check_url(conn, id):
 
         if status_code:
             insert_check(conn, id, status_code, h1, title, description)
-            flash("Проверка успешно проведена", "success")
+            flash("Страница успешно проверена", "success")
 
     return redirect(url_for('url_details', id=id))
 
