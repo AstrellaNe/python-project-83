@@ -62,7 +62,8 @@ def add_url(conn):
 
     if not validators.url(normalized_url):
         flash('Некорректный URL', 'danger')
-        return redirect(url_for('index'))
+        return render_template('index.html'), 422
+    # 🔥 Возврат 422 вместо редиректа
 
     if url_exists(conn, normalized_url):
         flash('Страница уже существует', 'info')
