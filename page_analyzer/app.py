@@ -3,21 +3,35 @@ import datetime
 import psycopg2
 import requests
 import validators
+import logging
 from bs4 import BeautifulSoup
-from flask import (Flask, request, redirect, flash,
-                   render_template, url_for)
-from page_analyzer.db_connection import (insert_url, get_all_urls,
-                                         url_exists, insert_check,
-                                         get_url_with_checks)
+from flask import Flask, request, redirect, flash, render_template, url_for
+from page_analyzer.db_connection import (
+    insert_url, get_all_urls, url_exists, insert_check, get_url_with_checks
+)
 from page_analyzer.tools import normalize_url, use_db_connection
 from dotenv import load_dotenv
-
 
 # Загружаем переменные окружения
 load_dotenv()
 
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("❌ Ошибка: DATABASE_URL не установлен!")
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
+
+
+def get_connection():
+    """Функция для установки соединения с базой данных"""
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+    except psycopg2.OperationalError as e:
+        logging.error(f"Ошибка подключения к БД: {e}")
+        return None
 
 
 @app.template_filter('datetimeformat')
@@ -27,14 +41,12 @@ def datetimeformat(value, format='%Y-%m-%d'):
     return value
 
 
-# Главная страница (Index)
 @app.route('/')
 @use_db_connection
 def index(conn):
     return render_template('index.html')
 
 
-# Страница со списком всех сайтов (urls.html)
 @app.route('/urls')
 @use_db_connection
 def urls(conn):
@@ -42,7 +54,6 @@ def urls(conn):
     return render_template('urls.html', urls=urls)
 
 
-# Добавление нового URL в БД
 @app.route('/urls', methods=['POST'])
 @use_db_connection
 def add_url(conn):
@@ -58,28 +69,22 @@ def add_url(conn):
         return redirect(url_for('urls'))
 
     url_id = insert_url(conn, normalized_url)
-    if url_id:
-        flash('Страница успешно добавлена', 'success')
-        return redirect(url_for('url_details', id=url_id))
-
-    flash('Ошибка: URL уже существует.', 'warning')
-    return redirect(url_for('urls'))
+    flash('Страница успешно добавлена', 'success')
+    return redirect(url_for('url_details', id=url_id))
 
 
-# Детальная страница сайта (url_details.html)
 @app.route('/urls/<int:id>')
 @use_db_connection
 def url_details(conn, id):
-    url, checks = get_url_with_checks(conn, id)
+    url_data, checks_data = get_url_with_checks(conn, id)
 
-    if not url:
+    if not url_data:
         flash('Страница не найдена', 'danger')
         return redirect(url_for('urls'))
 
-    return render_template('url_details.html', url=url, checks=checks)
+    return render_template('url_details.html', url=url_data, checks=checks_data)
 
 
-# Разбил `check_url()` на две функции, чтобы линтер не ругался
 def fetch_url_data(url):
     try:
         response = requests.get(url, timeout=10,
@@ -104,7 +109,6 @@ def fetch_url_data(url):
         return None, None, None, None
 
 
-# Запуск проверки сайта
 @app.route('/urls/<int:id>/checks', methods=['POST'])
 @use_db_connection
 def check_url(conn, id):
@@ -124,22 +128,6 @@ def check_url(conn, id):
             flash("Проверка успешно проведена", "success")
 
     return redirect(url_for('url_details', id=id))
-
-
-# Удаление URL
-@app.route('/urls/delete/<int:id>', methods=['POST'])
-@use_db_connection
-def delete_url(conn, id):
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM urls WHERE id = %s;", (id,))
-            conn.commit()
-            flash('Страница успешно удалена', 'success')
-
-    except psycopg2.Error as e:
-        flash(f"Ошибка при удалении: {e}", 'danger')
-
-    return redirect(url_for('urls'))
 
 
 if __name__ == '__main__':

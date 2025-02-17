@@ -37,12 +37,13 @@ def insert_url(conn, name):
         url_id = cursor.fetchone()
         conn.commit()
         return url_id[0] if url_id else None
-    
+
 
 def insert_check(conn, url_id, status_code, h1, title, description):
     with conn.cursor() as cursor:
         cursor.execute(
-            """INSERT INTO url_checks (url_id, status_code, h1, title, description)
+            """INSERT INTO url_checks (url_id,
+               status_code, h1, title, description)
                VALUES (%s, %s, %s, %s, %s)
                RETURNING id, created_at;""",
             (url_id, status_code, h1, title, description)
@@ -60,7 +61,11 @@ def get_all_urls(conn):
                       (SELECT created_at FROM url_checks
                        WHERE url_checks.url_id = urls.id
                        ORDER BY created_at DESC
-                       LIMIT 1) AS last_status
+                       LIMIT 1) AS last_check_date,
+                      (SELECT status_code FROM url_checks
+                       WHERE url_checks.url_id = urls.id
+                       ORDER BY created_at DESC
+                       LIMIT 1) AS last_status_code
                FROM urls
                ORDER BY urls.created_at DESC;"""
         )
@@ -86,7 +91,7 @@ def get_url_with_checks(conn, url_id):
                WHERE id = %s;""",
             (url_id,)
         )
-        url = cursor.fetchone()
+        url_data = cursor.fetchone()
 
         cursor.execute(
             """SELECT id, status_code, h1, title, description, created_at
@@ -95,6 +100,6 @@ def get_url_with_checks(conn, url_id):
                ORDER BY created_at DESC;""",
             (url_id,)
         )
-        checks = cursor.fetchall()
+        checks_data = cursor.fetchall()
 
-    return url, checks
+    return url_data, checks_data
