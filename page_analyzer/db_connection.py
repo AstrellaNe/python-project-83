@@ -1,26 +1,16 @@
 import os
 import psycopg2
-import socket
 from dotenv import load_dotenv
 
 
-# Загрузка переменных окружения
+# Загружаем переменные окружения
 load_dotenv()
 
-# Получение URL базы данных из переменной окружения
 DATABASE_URL = os.getenv("DATABASE_URL")
-SECRET_KEY = os.getenv("SECRET_KEY")
+
 
 if not DATABASE_URL:
     raise ValueError("❌ Ошибка: DATABASE_URL не установлен!")
-try:
-    conn = psycopg2.connect(DATABASE_URL)
-    print("✅ Успешное подключение к БД!")
-except psycopg2.OperationalError as e:
-    print(f"❌ Ошибка подключения к БД: {e}")
-
-if not SECRET_KEY:
-    raise ValueError("❌ Ошибка: SECRET_KEY не установлен!")
 
 
 # Функция для установки соединения с базой данных
@@ -34,26 +24,32 @@ def get_connection():
         return None
 
 
-# Проверяем доступность хоста
-host = DATABASE_URL.split("@")[1].split(":")[0]
-try:
-    print(f"Проверяем доступность хоста: {host}")
-    socket.gethostbyname(host)
-    print("✅ Хост доступен!")
-except socket.gaierror:
-    print(f"❌ Ошибка: Хост {host} недоступен!")
-
-
 # Функция для добавления URL в базу данных
 def insert_url(conn, name):
     with conn.cursor() as cursor:
         cursor.execute(
             """INSERT INTO urls (name)
                VALUES (%s)
-               ON CONFLICT (name) DO NOTHING;""",
+               ON CONFLICT (name) DO NOTHING
+               RETURNING id;""",
             (name,)
         )
+        url_id = cursor.fetchone()
         conn.commit()
+        return url_id[0] if url_id else None
+    
+
+def insert_check(conn, url_id, status_code, h1, title, description):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """INSERT INTO url_checks (url_id, status_code, h1, title, description)
+               VALUES (%s, %s, %s, %s, %s)
+               RETURNING id, created_at;""",
+            (url_id, status_code, h1, title, description)
+        )
+        check = cursor.fetchone()
+        conn.commit()
+        return check
 
 
 # Функция для получения всех URL
@@ -84,37 +80,21 @@ def url_exists(conn, name):
 # Получение данных о сайте и его проверках
 def get_url_with_checks(conn, url_id):
     with conn.cursor() as cursor:
-        # Получаем данные о сайте
         cursor.execute(
-            "SELECT id, name, created_at FROM urls WHERE id = %s;", (url_id,)
+            """SELECT id, name, created_at
+               FROM urls
+               WHERE id = %s;""",
+            (url_id,)
         )
         url = cursor.fetchone()
 
-        # Получаем данные о проверках
         cursor.execute(
             """SELECT id, status_code, h1, title, description, created_at
-               FROM url_checks WHERE url_id = %s
+               FROM url_checks
+               WHERE url_id = %s
                ORDER BY created_at DESC;""",
             (url_id,)
         )
         checks = cursor.fetchall()
 
     return url, checks
-
-
-# Функция для записи проверки в базу
-def insert_check(conn, url_id, status_code, h1, title, description):
-    with conn.cursor() as cursor:
-        print(f"🔥 Добавляем проверку: url_id={url_id}, "
-              f"status_code={status_code}, h1={h1}")
-
-        cursor.execute(
-            """INSERT INTO url_checks (url_id, status_code,
-                                       h1, title, description)
-               VALUES (%s, %s, %s, %s, %s)
-               RETURNING id, created_at;""",
-            (url_id, status_code, h1, title, description)
-        )
-        check = cursor.fetchone()
-        conn.commit()
-        print(f"✅ Успешно добавлено: {check}")

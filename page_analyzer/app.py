@@ -9,7 +9,6 @@ from flask import (Flask, request, redirect, flash,
 from page_analyzer.db_connection import (insert_url, get_all_urls,
                                          url_exists, insert_check,
                                          get_url_with_checks)
-
 from page_analyzer.tools import normalize_url, use_db_connection
 from dotenv import load_dotenv
 
@@ -35,11 +34,11 @@ def index(conn):
     return render_template('index.html')
 
 
-# Страница со списком всех добавленных сайтов (urls.html)
+# Страница со списком всех сайтов (urls.html)
 @app.route('/urls')
 @use_db_connection
 def urls(conn):
-    urls = get_all_urls(conn)  # Получаем список сайтов
+    urls = get_all_urls(conn)
     return render_template('urls.html', urls=urls)
 
 
@@ -48,28 +47,23 @@ def urls(conn):
 @use_db_connection
 def add_url(conn):
     input_url = request.form.get('url')
-
-    # Нормализация URL
     normalized_url = normalize_url(input_url)
 
-    # Валидация URL
     if not validators.url(normalized_url):
         flash('Некорректный URL', 'danger')
         return redirect(url_for('index'))
 
-    # Проверка на дубликаты
     if url_exists(conn, normalized_url):
         flash('Страница уже существует', 'info')
         return redirect(url_for('urls'))
 
-    try:
-        url_id = insert_url(conn, normalized_url)
+    url_id = insert_url(conn, normalized_url)
+    if url_id:
         flash('Страница успешно добавлена', 'success')
         return redirect(url_for('url_details', id=url_id))
 
-    except Exception as e:
-        flash(f'Ошибка при добавлении: {e}', 'danger')
-        return redirect(url_for('index'))
+    flash('Ошибка: URL уже существует.', 'warning')
+    return redirect(url_for('urls'))
 
 
 # Детальная страница сайта (url_details.html)
@@ -85,46 +79,54 @@ def url_details(conn, id):
     return render_template('url_details.html', url=url, checks=checks)
 
 
-# Запуск проверки сайта (кнопка "Запустить проверку")
+# Разбиваем `check_url()` на две функции, чтобы уменьшить сложность
+def fetch_url_data(url):
+    try:
+        response = requests.get(url, timeout=10,
+                                headers={"User-Agent": "Mozilla/5.0"})
+        response.raise_for_status()
+        status_code = response.status_code
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        h1 = soup.h1.text.strip() if soup.h1 else None
+        title = soup.title.text.strip() if soup.title else None
+        meta_tag = soup.find("meta", attrs={"name": "description"})
+        description = meta_tag["content"].strip() if meta_tag else None
+
+        return status_code, h1, title, description
+
+    except requests.Timeout:
+        flash("Ошибка: время ожидания запроса истекло", "danger")
+        return None, None, None, None
+
+    except requests.RequestException as e:
+        flash(f"Ошибка запроса: {e}", "danger")
+        return None, None, None, None
+
+
+# Запуск проверки сайта
 @app.route('/urls/<int:id>/checks', methods=['POST'])
 @use_db_connection
 def check_url(conn, id):
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT name FROM urls WHERE id = %s;", (id,))
-            url = cursor.fetchone()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT name FROM urls WHERE id = %s;", (id,))
+        url = cursor.fetchone()
 
-            if not url:
-                flash("Страница не найдена", "danger")
-                return redirect(url_for('url_details', id=id))
+        if not url:
+            flash("Страница не найдена", "danger")
+            return redirect(url_for('url_details', id=id))
 
-            url = url[0]
+        url = url[0]
+        status_code, h1, title, description = fetch_url_data(url)
 
-            response = requests.get(url, timeout=10, headers={
-                "User-Agent": "Mozilla/5.0"
-            })
-            response.raise_for_status()
-            status_code = response.status_code
-
-            soup = BeautifulSoup(response.text, 'html.parser')
-
-            h1 = soup.h1.text.strip() if soup.h1 else None
-            title = soup.title.text.strip() if soup.title else None
-            meta_tag = soup.find("meta", attrs={"name": "description"})
-            description = meta_tag["content"].strip() if meta_tag else None
-
+        if status_code:
             insert_check(conn, id, status_code, h1, title, description)
-
             flash("Проверка успешно проведена", "success")
-
-    except requests.RequestException as e:
-        flash("Ошибка при проверке", "danger")
-        print(f"❌ Ошибка запроса: {e}")
 
     return redirect(url_for('url_details', id=id))
 
 
-# Удаление URL (Кнопка "Удалить")
+# Удаление URL
 @app.route('/urls/delete/<int:id>', methods=['POST'])
 @use_db_connection
 def delete_url(conn, id):
