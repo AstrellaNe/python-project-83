@@ -79,7 +79,7 @@ def url_details(conn, id):
     return render_template('url_details.html', url=url, checks=checks)
 
 
-# Разбиваем `check_url()` на две функции, чтобы уменьшить сложность
+# Разбил `check_url()` на две функции, чтобы линтер не ругался
 def fetch_url_data(url):
     try:
         response = requests.get(url, timeout=10,
