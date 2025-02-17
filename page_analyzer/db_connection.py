@@ -18,7 +18,7 @@ try:
     print("✅ Успешное подключение к БД!")
 except psycopg2.OperationalError as e:
     print(f"❌ Ошибка подключения к БД: {e}")
-    
+
 if not SECRET_KEY:
     raise ValueError("❌ Ошибка: SECRET_KEY не установлен!")
 
@@ -79,6 +79,27 @@ def url_exists(conn, name):
             (name,)
         )
         return cursor.fetchone() is not None
+
+
+# Получение данных о сайте и его проверках
+def get_url_with_checks(conn, url_id):
+    with conn.cursor() as cursor:
+        # Получаем данные о сайте
+        cursor.execute(
+            "SELECT id, name, created_at FROM urls WHERE id = %s;", (url_id,)
+        )
+        url = cursor.fetchone()
+
+        # Получаем данные о проверках
+        cursor.execute(
+            """SELECT id, status_code, h1, title, description, created_at
+               FROM url_checks WHERE url_id = %s
+               ORDER BY created_at DESC;""",
+            (url_id,)
+        )
+        checks = cursor.fetchall()
+
+    return url, checks
 
 
 # Функция для записи проверки в базу
