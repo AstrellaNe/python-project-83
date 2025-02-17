@@ -58,11 +58,16 @@ def urls(conn):
 @use_db_connection
 def add_url(conn):
     input_url = request.form.get('url')
+
+    if not input_url:
+        flash('URL не может быть пустым', 'danger')
+        return render_template('index.html'), 422
+
     normalized_url = normalize_url(input_url)
 
     if not validators.url(normalized_url):
         flash('Некорректный URL', 'danger')
-        return render_template('index.html'), 422  # Теперь 422
+        return render_template('index.html'), 422
 
     if url_exists(conn, normalized_url):
         cursor = conn.cursor()
@@ -71,7 +76,6 @@ def add_url(conn):
         url_id = cursor.fetchone()[0]
         flash('Страница уже существует', 'info')
         return redirect(url_for('url_details', id=url_id))
-        # Редирект на страницу URL
 
     url_id = insert_url(conn, normalized_url)
     flash('Страница успешно добавлена', 'success')
@@ -132,6 +136,8 @@ def check_url(conn, id):
         if status_code:
             insert_check(conn, id, status_code, h1, title, description)
             flash("Страница успешно проверена", "success")
+        else:
+            flash("Произошла ошибка при проверке", "danger")
 
     return redirect(url_for('url_details', id=id))
 
