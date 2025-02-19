@@ -120,9 +120,7 @@ def fetch_url_data(url):
         flash("Ошибка: время ожидания запроса истекло", "danger")
         return None, None, None, None
 
-    except requests.RequestException as e:
-        flash(f"Произошла ошибка при проверке: {e}", "danger")
-        # не было сообщения
+    except requests.RequestException:
         return None, None, None, None
 
 
