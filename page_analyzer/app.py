@@ -59,26 +59,35 @@ def urls(conn):
 def add_url(conn):
     input_url = request.form.get('url')
 
+    # Проверка на пустой ввод
     if not input_url:
         flash('URL не может быть пустым', 'danger')
         return render_template('index.html'), 422
 
-    normalized_url = normalize_url(input_url)  # Применяем нормализацию
+    # Нормализация введенного URL
+    normalized_url = normalize_url(input_url)
 
+    # Валидация URL
     if not validators.url(normalized_url):
         flash('Некорректный URL', 'danger')
         return render_template('index.html'), 422
 
-    if url_exists(conn, normalized_url):
-        # Проверяем существование уже нормализованного URL
-        flash('Страница уже существует', 'info')
-        return redirect(url_for('urls'))
-        # Перенаправляем пользователя на список сайтов
+    # Проверка, существует ли URL в базе
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT id FROM urls WHERE name = %s;",
+                       (normalized_url,))
+        existing_url = cursor.fetchone()
 
+    # Если URL уже существует — редирект на его страницу
+    if existing_url:
+        flash('Страница уже существует', 'info')
+        return redirect(url_for('url_details', id=existing_url[0]))
+
+    # Если не существует, добавляем URL
     url_id = insert_url(conn, normalized_url)
-    # Записываем нормализованный URL в базу
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_details', id=url_id))
+
 
 
 @app.route('/urls/<int:id>')
