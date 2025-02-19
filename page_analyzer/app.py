@@ -7,7 +7,7 @@ import logging
 from bs4 import BeautifulSoup
 from flask import Flask, request, redirect, flash, render_template, url_for
 from page_analyzer.db_connection import (
-    insert_url, get_all_urls, url_exists, insert_check, get_url_with_checks
+    insert_url, get_all_urls, insert_check, get_url_with_checks
 )
 from page_analyzer.tools import normalize_url, use_db_connection
 from dotenv import load_dotenv
@@ -87,7 +87,6 @@ def add_url(conn):
     url_id = insert_url(conn, normalized_url)
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_details', id=url_id))
-
 
 
 @app.route('/urls/<int:id>')
