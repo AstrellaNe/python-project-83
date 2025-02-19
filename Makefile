@@ -2,7 +2,7 @@ PORT ?= 8000
 
 # Локальная разработка
 dev:
-	FLASK_APP=page_analyzer.app poetry run flask run --port $(PORT)
+	uv run flask --debug --app page_analyzer:app run
 
 # Запуск приложения локально через Gunicorn
 start:
@@ -26,4 +26,5 @@ lint:
 
 # Запуск тестов
 test:
+	# Проверяем код с помощью flake8
 	poetry run pytest
