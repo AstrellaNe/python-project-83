@@ -1,4 +1,5 @@
-PORT ?= 8000
+PORT ?= 10000
+# поменял порт для Render
 
 # Локальная разработка
 dev:
@@ -12,9 +13,9 @@ start:
 render-start:
 	gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
 
-# Установка зависимостей
 install:
-	uv sync
+	# Устанавливаем зависимости с помощью uv
+	$HOME/.local/bin/uv sync
 
 # Сборка проекта
 build:
