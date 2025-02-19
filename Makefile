@@ -1,32 +1,29 @@
 PORT ?= 8000
 
+# Локальная разработка
 dev:
-	# Запускаем приложение Flask локально
 	FLASK_APP=page_analyzer.app poetry run flask run --port $(PORT)
 
+# Запуск приложения локально через Gunicorn
 start:
-	# Запускаем Gunicorn с 5 рабочими процессами
 	poetry run gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer.app:app
 
+# Запуск приложения на Render
 render-start:
-    gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
+	gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
 
+# Установка зависимостей
 install:
-	# Устанавливаем зависимости проекта
-	poetry install
+	uv sync
 
-poetry-build:
-	# Собираем проект с помощью Poetry
-	poetry build
+# Сборка проекта
+build:
+	./build.sh
 
-lint:	
-	# Проверяем код с помощью flake8
+# Проверка кода
+lint:
 	poetry run flake8
 
+# Запуск тестов
 test:
-	# Запускаем тесты с pytest
 	poetry run pytest
-
-build:
-	# Запускаем сборку проекта
-	./build.sh
