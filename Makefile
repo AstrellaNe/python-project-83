@@ -8,15 +8,8 @@ start:
 	# Запускаем Gunicorn с 5 рабочими процессами
 	poetry run gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer.app:app
 
-start-full:
-	# Устанавливаем зависимости и собираем проект перед запуском
-	make install
-	make build
-	FLASK_APP=page_analyzer.app poetry run flask run --port $(PORT) --debug
-
-start-gunicorn:
-	# Запускаем приложение с Gunicorn (Production Mode)
-	poetry run gunicorn --workers=4 --bind=0.0.0.0:$(PORT) page_analyzer.app:app
+render-start:
+    gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
 
 install:
 	# Устанавливаем зависимости проекта
