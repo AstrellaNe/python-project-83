@@ -20,6 +20,7 @@ def use_db_connection(func):
     return wrapper
 
 
-def normalize_url(url):
-    parsed_url = urlparse(url)
-    return f"{parsed_url.scheme}://{parsed_url.netloc}"
+def normalize_url(input_url):
+    parsed_url = urlparse(input_url)
+    normalized_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    return normalized_url

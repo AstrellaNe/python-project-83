@@ -63,21 +63,20 @@ def add_url(conn):
         flash('URL не может быть пустым', 'danger')
         return render_template('index.html'), 422
 
-    normalized_url = normalize_url(input_url)
+    normalized_url = normalize_url(input_url)  # Применяем нормализацию
 
     if not validators.url(normalized_url):
         flash('Некорректный URL', 'danger')
         return render_template('index.html'), 422
 
     if url_exists(conn, normalized_url):
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM urls WHERE name = %s;",
-                       (normalized_url,))
-        url_id = cursor.fetchone()[0]
+        # Проверяем существование уже нормализованного URL
         flash('Страница уже существует', 'info')
-        return redirect(url_for('url_details', id=url_id))
+        return redirect(url_for('urls'))
+        # Перенаправляем пользователя на список сайтов
 
     url_id = insert_url(conn, normalized_url)
+    # Записываем нормализованный URL в базу
     flash('Страница успешно добавлена', 'success')
     return redirect(url_for('url_details', id=url_id))
 
