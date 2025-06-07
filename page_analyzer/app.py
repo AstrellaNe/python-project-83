@@ -98,7 +98,7 @@ def check_url(conn, id):
         if str(e) == "timeout":
             flash("Ошибка: время ожидания запроса истекло", "danger")
         else:
-            flash("Произошла ошибка при запросе страницы", "danger")
+            flash("Произошла ошибка при проверке", "danger")
         return redirect(url_for("url_details", id=id))
 
     insert_check(conn, id, status_code, h1, title, description)
