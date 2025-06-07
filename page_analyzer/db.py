@@ -1,5 +1,5 @@
 import logging
-import psycopg
+import psycopg2
 from contextlib import contextmanager
 from flask import current_app
 
@@ -15,7 +15,7 @@ def get_db_conn():
     dsn = current_app.config["DATABASE_URL"]
     conn = None
     try:
-        conn = psycopg.connect(dsn)
+        conn = psycopg2.connect(dsn)
         yield conn
         conn.commit()
     except Exception as e:
