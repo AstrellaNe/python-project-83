@@ -1,151 +1,110 @@
 import os
-import datetime
-import psycopg2
-import requests
-import validators
-import logging
-from bs4 import BeautifulSoup
-from flask import Flask, request, redirect, flash, render_template, url_for
-from page_analyzer.db_connection import (
-    insert_url, get_all_urls, insert_check, get_url_with_checks
-)
-from page_analyzer.tools import normalize_url, use_db_connection
 from dotenv import load_dotenv
+from flask import Flask, request, render_template, redirect, url_for, flash
 
-# Загружаем переменные окружения
+from page_analyzer.tools import use_db_connection, normalize_url
+from page_analyzer.validation import (
+    is_valid_url, check_url_not_exists, is_valid_id
+)
+from page_analyzer.db import (
+    insert_url,
+    get_all_urls,
+    get_id_by_name,
+    get_name_by_id,
+    insert_check,
+    get_url_with_checks,
+)
+from page_analyzer.http_client import fetch_url_data, FetchError
+
+# ─── Настройка приложения ─────────────────────────
+
 load_dotenv()
-
-
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    raise ValueError("❌ Ошибка: DATABASE_URL не установлен!")
+    raise RuntimeError("❌ Ошибка: DATABASE_URL не задана")
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
+app.config["DATABASE_URL"] = DATABASE_URL
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret")
 
 
-def get_connection():
-    """Функция для установки соединения с базой данных"""
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
-    except psycopg2.OperationalError as e:
-        logging.error(f"Ошибка подключения к БД: {e}")
-        return None
-
+# ─── Фильтр форматирования даты ───────────────────
 
 @app.template_filter('datetimeformat')
 def datetimeformat(value, format='%Y-%m-%d'):
-    if isinstance(value, datetime.datetime):
-        return value.strftime(format)
-    return value
+    return value.strftime(format) if hasattr(value, 'strftime') else value
 
 
-@app.route('/')
+# ─── Маршруты ──────────────────────────────────────
+
+@app.get("/")
 @use_db_connection
 def index(conn):
-    return render_template('index.html')
+    return render_template("index.html")
 
 
-@app.route('/urls')
+@app.get("/urls")
 @use_db_connection
-def urls(conn):
+def list_urls(conn):
     urls = get_all_urls(conn)
-    return render_template('urls.html', urls=urls)
+    return render_template("urls.html", urls=urls)
 
 
-@app.route('/urls', methods=['POST'])
+@app.post("/urls")
 @use_db_connection
 def add_url(conn):
-    input_url = request.form.get('url')
+    raw_url = request.form.get("url", "").strip()
+    if not raw_url:
+        flash("URL не может быть пустым", "danger")
+        return render_template("index.html"), 422
 
-    # Проверка на пустой ввод
-    if not input_url:
-        flash('URL не может быть пустым', 'danger')
-        return render_template('index.html'), 422
+    name = normalize_url(raw_url)
+    if not is_valid_url(name):
+        flash("Некорректный URL", "danger")
+        return render_template("index.html"), 422
 
-    # Нормализация введенного URL
-    normalized_url = normalize_url(input_url)
+    if not check_url_not_exists(conn, name):
+        existing_id = get_id_by_name(conn, name)
+        flash("Страница уже существует", "info")
+        return redirect(url_for("url_details", id=existing_id))
 
-    # Валидация URL
-    if not validators.url(normalized_url):
-        flash('Некорректный URL', 'danger')
-        return render_template('index.html'), 422
-
-    # Проверка, существует ли URL в базе
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT id FROM urls WHERE name = %s;",
-                       (normalized_url,))
-        existing_url = cursor.fetchone()
-
-    # Если URL уже существует — редирект на его страницу
-    if existing_url:
-        flash('Страница уже существует', 'info')
-        return redirect(url_for('url_details', id=existing_url[0]))
-
-    # Если не существует, добавляем URL
-    url_id = insert_url(conn, normalized_url)
-    flash('Страница успешно добавлена', 'success')
-    return redirect(url_for('url_details', id=url_id))
+    new_id = insert_url(conn, name)
+    flash("Страница успешно добавлена", "success")
+    return redirect(url_for("url_details", id=new_id))
 
 
-@app.route('/urls/<int:id>')
+@app.get("/urls/<int:id>")
 @use_db_connection
 def url_details(conn, id):
-    url_data, checks_data = get_url_with_checks(conn, id)
+    if not is_valid_id(conn, id):
+        flash("Страница не найдена", "danger")
+        return redirect(url_for("index"))
 
-    if not url_data:
-        flash('Страница не найдена', 'danger')
-        return redirect(url_for('urls'))
-
-    return render_template('url_details.html', url=url_data, checks=checks_data)
-
-
-def fetch_url_data(url):
-    try:
-        response = requests.get(url, timeout=10,
-                                headers={"User-Agent": "Mozilla/5.0"})
-        response.raise_for_status()
-        status_code = response.status_code
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        h1 = soup.h1.text.strip() if soup.h1 else None
-        title = soup.title.text.strip() if soup.title else None
-        meta_tag = soup.find("meta", attrs={"name": "description"})
-        description = meta_tag["content"].strip() if meta_tag else None
-
-        return status_code, h1, title, description
-
-    except requests.Timeout:
-        flash("Ошибка: время ожидания запроса истекло", "danger")
-        return None, None, None, None
-
-    except requests.RequestException:
-        return None, None, None, None
+    url_data, checks = get_url_with_checks(conn, id)
+    return render_template("url_details.html", url=url_data, checks=checks)
 
 
-@app.route('/urls/<int:id>/checks', methods=['POST'])
+@app.post("/urls/<int:id>/checks")
 @use_db_connection
 def check_url(conn, id):
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT name FROM urls WHERE id = %s;", (id,))
-        url = cursor.fetchone()
+    if not is_valid_id(conn, id):
+        flash("Страница не найдена", "danger")
+        return redirect(url_for("index"))
 
-        if not url:
-            flash("Страница не найдена", "danger")
-            return redirect(url_for('url_details', id=id))
-
-        url = url[0]
-        status_code, h1, title, description = fetch_url_data(url)
-
-        if status_code:
-            insert_check(conn, id, status_code, h1, title, description)
-            flash("Страница успешно проверена", "success")
+    name = get_name_by_id(conn, id)
+    try:
+        status_code, h1, title, description = fetch_url_data(name)
+    except FetchError as e:
+        if str(e) == "timeout":
+            flash("Ошибка: время ожидания запроса истекло", "danger")
         else:
-            flash("Произошла ошибка при проверке", "danger")
+            flash("Произошла ошибка при запросе страницы", "danger")
+        return redirect(url_for("url_details", id=id))
 
-    return redirect(url_for('url_details', id=id))
+    insert_check(conn, id, status_code, h1, title, description)
+    flash("Страница успешно проверена", "success")
+    return redirect(url_for("url_details", id=id))
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))

@@ -2,7 +2,6 @@
 [![Actions Status](https://github.com/AstrellaNe/python-project-83/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/AstrellaNe/python-project-83/actions)
 [![CI](https://github.com/AstrellaNe/python-project-83/actions/workflows/ci.yml/badge.svg)](https://github.com/AstrellaNe/python-project-83/actions/workflows/ci.yml)
 [![Maintainability](https://api.codeclimate.com/v1/badges/ca36f4e239b9247b92fa/maintainability)](https://codeclimate.com/github/AstrellaNe/python-project-83/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/ca36f4e239b9247b92fa/test_coverage)](https://codeclimate.com/github/AstrellaNe/python-project-83/test_coverage)
 
 ### Access to the deployed application
 [View application (Render)](https://page-analyzer-project-83.onrender.com)
