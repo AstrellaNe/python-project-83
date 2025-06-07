@@ -51,10 +51,35 @@ def get_all_urls(conn) -> list[tuple]:
     Возвращает список всех URL-ов: [(id, name, created_at), ...]
     """
     with conn.cursor() as cur:
-        cur.execute(
-            "SELECT id, name, created_at FROM urls ORDER BY created_at DESC;"
-        )
-        return cur.fetchall()
+        cur.execute("""
+            SELECT
+              u.id,
+              u.name,
+              u.created_at,
+              (SELECT MAX(c.created_at) FROM url_checks c WHERE c.url_id = u.id)
+                AS last_checked_at,
+              (SELECT c2.status_code
+                 FROM url_checks c2
+                WHERE c2.url_id = u.id
+                ORDER BY c2.created_at DESC
+                LIMIT 1) AS status_code
+            FROM urls u
+            ORDER BY u.id;
+        """)
+        rows = cur.fetchall()
+
+    result = []
+    for id_, name, created_at, last_checked_at, status_code in rows:
+        result.append({
+            "id": id_,
+            "name": name,
+            "created_at": created_at,
+            "last_checked_at": last_checked_at,
+            "status_code": (
+                str(status_code) if status_code is not None else None
+            ),
+        })
+    return result
 
 
 def get_id_by_name(conn, name: str) -> int | None:

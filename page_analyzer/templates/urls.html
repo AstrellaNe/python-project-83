@@ -48,12 +48,24 @@
                 </tr>
             </thead>
             <tbody>
-                {% for url in urls %}
+                {% for u in urls %}
                 <tr>
-                    <td>{{ url[0] }}</td>
-                    <td><a href="{{ url_for('url_details', id=url[0]) }}">{{ url[1] }}</a></td>
-                    <td>{{ url[3] | datetimeformat('%Y-%m-%d') if url[3] else "—" }}</td>
-                    <td>{{ url[4] if url[4] else "—" }}</td> 
+                    <td>{{ u.id }}</td>
+                    <td>
+                        <a href="{{ url_for('url_details', id=u.id) }}">
+                            {{ u.name }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if u.last_checked_at %}
+                            {{ u.last_checked_at | datetimeformat('%Y-%m-%d') }}
+                        {% else %}
+                            — 
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ u.status_code if u.status_code else "—" }}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
